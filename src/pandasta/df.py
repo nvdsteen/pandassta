@@ -14,10 +14,10 @@ from pandas.api.types import CategoricalDtype
 from strenum import StrEnum
 from tqdm import tqdm
 
-from services.pandasta.sta import convert_to_datetime
-from services.pandasta.sta import Entities, Properties
-from services.pandasta.logging_constants import TQDM_DESC_FORMAT
-from services.pandasta.logging_constants import TQDM_BAR_FORMAT
+from .sta import convert_to_datetime
+from .sta import Entities, Properties
+from .logging_constants import TQDM_DESC_FORMAT
+from .logging_constants import TQDM_BAR_FORMAT
 
 log = logging.getLogger(__name__)
 

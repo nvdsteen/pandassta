@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pandasta"
+version = "0.0.1"
+authors = [
+  { name="nvds" },
+]
+description = "Package for easy datarequests from sensortings"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+]
+dynamic = ["dependencies"]
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[project.urls]
+Homepage = "https://github.com/nvdsteen/pandasta"
+Issues = "https://github.com/nvdsteen/pandasta/issues"

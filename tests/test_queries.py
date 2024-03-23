@@ -2,10 +2,11 @@ import json
 
 import pytest
 # from numpy.testing import
-import services.pandasta.sta_requests
-from test_config import cfg # should not use this
+import src.pandasta.sta_requests
+from omegaconf import DictConfig
+from hydra import compose, initialize
 
-from services.pandasta.sta_requests import (Entity, Query, build_query_datastreams,
+from src.pandasta.sta_requests import (Entity, Query, build_query_datastreams,
                                         get_absolute_path_to_base,
                                         get_nb_datastreams_of_thing,
                                         get_observations_count_thing_query,
@@ -13,9 +14,17 @@ from services.pandasta.sta_requests import (Entity, Query, build_query_datastrea
                                         get_results_n_datastreams_query,
                                         response_datastreams_to_df,
                                         update_response)
-from services.pandasta.sta import (Entities, Filter, Properties, Qactions,
+from src.pandasta.sta import (Entities, Filter, Properties, Qactions,
                                    Settings)
-from services.qualityassurancetool.config import QCconf, filter_cfg_to_query
+from src.pandasta.sta_requests import QCconf, filter_cfg_to_query, set_sta_url
+
+@pytest.fixture(scope="session")
+def cfg() -> DictConfig:
+    with initialize(config_path="./conf", version_base="1.2"):
+        conf = compose("conf_base.yaml")
+    set_sta_url(conf.data_api.base_url)
+
+    return conf
 
 class MockResponse:
     def __init__(self):
@@ -63,7 +72,7 @@ def mock_response(monkeypatch):
     def mock_get_sets(*args, **kwars):
         return MockResponse().get_data_sets()
 
-    monkeypatch.setattr(services.pandasta.sta_requests.Query, "get_with_retry", mock_get)
+    monkeypatch.setattr(src.pandasta.sta_requests.Query, "get_with_retry", mock_get)
     # monkeypatch.setattr(u.Query, "get_data_sets", mock_get_sets)
 
 
@@ -72,7 +81,7 @@ def mock_response_full(monkeypatch):
     def mock_get(*args, **kwargs):
         return MockResponseFull()
 
-    monkeypatch.setattr(services.pandasta.sta_requests.Query, "get_with_retry", mock_get)
+    monkeypatch.setattr(src.pandasta.sta_requests.Query, "get_with_retry", mock_get)
 
 
 @pytest.fixture
@@ -80,7 +89,7 @@ def mock_response_full_obs(monkeypatch):
     def mock_get(*args, **kwargs):
         return MockResponseFullObs()
 
-    monkeypatch.setattr(services.pandasta.sta_requests.Query, "get_with_retry", mock_get)
+    monkeypatch.setattr(src.pandasta.sta_requests.Query, "get_with_retry", mock_get)
 
 
 class TestServicesRequests:

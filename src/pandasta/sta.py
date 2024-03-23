@@ -5,8 +5,7 @@ import logging
 
 from strenum import StrEnum
 
-from services.pandasta.logging_constants import ISO_STR_FORMAT, ISO_STR_FORMAT2
-# from services.pandasta.requests import log
+from .logging_constants import ISO_STR_FORMAT, ISO_STR_FORMAT2
 
 log = logging.getLogger(__name__)
 

@@ -9,19 +9,49 @@ from collections import Counter
 from dataclasses import dataclass, field
 from functools import partial, wraps
 from typing import List, Tuple
+from datetime import datetime
 
 import pandas as pd
 import requests
 from tqdm import tqdm
 
-from services.pandasta.logging_constants import TQDM_DESC_FORMAT
-from services.pandasta.logging_constants import TQDM_BAR_FORMAT
-from services.pandasta.sta import (Entities, Filter, Order, OrderOption, Properties,
-                          Qactions, Settings, convert_to_datetime, log)
-from services.pandasta.df import (Df, df_type_conversions,
+from .logging_constants import TQDM_DESC_FORMAT
+from .logging_constants import TQDM_BAR_FORMAT, ISO_STR_FORMAT
+
+from .sta import (Entities, Filter, Order, OrderOption, Properties,
+         Qactions, Settings, convert_to_datetime, log)
+from .df import (Df, df_type_conversions,
                                   response_single_datastream_to_df, series_to_patch_dict)
 
 log = logging.getLogger(__name__)
+
+
+@dataclass
+class QCconf:
+    time: TimeConfig
+    hydra: HydraConfig
+    data_api: DataApi
+    reset: ResetConfig
+    location: LocationConfig
+    QC_dependent: list[QcDependentEntry]
+    QC: dict[str, QcEntry]
+    QC_global: dict[str, QcEntry] = field(default_factory=dict)
+
+
+def filter_cfg_to_query(filter_cfg: FilterEntry) -> str:
+    filter_condition = ""
+    if filter_cfg:
+        range = filter_cfg.phenomenonTime.range
+        format = filter_cfg.phenomenonTime.format
+
+        t0, t1 = [datetime.strptime(str(ti), format) for ti in range]
+
+        filter_condition = (
+            f"{Properties.PHENOMENONTIME} gt {t0.strftime(ISO_STR_FORMAT)} and "
+            f"{Properties.PHENOMENONTIME} lt {t1.strftime(ISO_STR_FORMAT)}"
+        )
+    log.debug(f"Configure filter: {filter_condition=}")
+    return filter_condition
 
 
 def retry(exception_to_check, tries=4, delay=3, backoff=2):
