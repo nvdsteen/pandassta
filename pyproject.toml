@@ -24,3 +24,8 @@ files = ["requirements.txt"]
 [project.urls]
 Homepage = "https://github.com/nvdsteen/pandasta"
 Issues = "https://github.com/nvdsteen/pandasta/issues"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
