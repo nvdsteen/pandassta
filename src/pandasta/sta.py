@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 import logging
+from typing import Tuple
 
 from strenum import StrEnum
 
@@ -163,3 +165,23 @@ def convert_to_datetime(value: str) -> datetime:
         except Exception as e:
             log.exception(e)
             raise e
+
+
+@dataclass
+class DbCredentials:
+    database: str
+    user: str
+    host: str
+    port: int
+    passphrase: str
+
+
+@dataclass
+class PhenomenonTimeFilter:
+    format: str
+    range: Tuple[str, str]
+
+
+@dataclass
+class FilterEntry:
+    phenomenonTime: PhenomenonTimeFilter

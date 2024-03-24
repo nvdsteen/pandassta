@@ -16,7 +16,7 @@ from src.pandasta.sta_requests import (Entity, Query, build_query_datastreams,
                                         update_response)
 from src.pandasta.sta import (Entities, Filter, Properties, Qactions,
                                    Settings)
-from src.pandasta.sta_requests import QCconf, filter_cfg_to_query, set_sta_url
+from src.pandasta.sta_requests import filter_cfg_to_query, set_sta_url
 
 @pytest.fixture(scope="session")
 def cfg() -> DictConfig:
@@ -93,7 +93,7 @@ def mock_response_full_obs(monkeypatch):
 
 
 class TestServicesRequests:
-    def test_get_observations_count_thing_query(self, cfg: QCconf):
+    def test_get_observations_count_thing_query(self, cfg: DictConfig):
         q = get_observations_count_thing_query(
             entity_id=cfg.data_api.things.id,
             filter_condition=f"{Properties.PHENOMENONTIME} gt 2023-01-02",
@@ -107,7 +107,7 @@ class TestServicesRequests:
             "$select=Observations/@iot.count)"
         )
 
-    def test_build_query_datastreams(self, cfg: QCconf):
+    def test_build_query_datastreams(self, cfg: DictConfig):
         q = build_query_datastreams(entity_id=cfg.data_api.things.id)
         assert (
             q == "http://testing.com/v1.1/Things(1)"

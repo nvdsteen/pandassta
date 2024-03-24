@@ -3,39 +3,28 @@ from __future__ import annotations
 import configparser
 import json
 import logging
-from pathlib import Path
 import time
 from collections import Counter
 from dataclasses import dataclass, field
-from functools import partial, wraps
-from typing import List, Tuple
 from datetime import datetime
+from functools import partial, wraps
+from pathlib import Path
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import requests
 from tqdm import tqdm
 
-from .logging_constants import TQDM_DESC_FORMAT
-from .logging_constants import TQDM_BAR_FORMAT, ISO_STR_FORMAT
+from .sta import FilterEntry
 
-from .sta import (Entities, Filter, Order, OrderOption, Properties,
-         Qactions, Settings, convert_to_datetime, log)
-from .df import (Df, df_type_conversions,
-                                  response_single_datastream_to_df, series_to_patch_dict)
+from .df import (Df, df_type_conversions, response_single_datastream_to_df,
+                 series_to_patch_dict)
+from .logging_constants import (ISO_STR_FORMAT, TQDM_BAR_FORMAT,
+                                TQDM_DESC_FORMAT)
+from .sta import (Entities, Filter, Order, OrderOption, Properties, Qactions,
+                  Settings, convert_to_datetime, log)
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class QCconf:
-    time: TimeConfig
-    hydra: HydraConfig
-    data_api: DataApi
-    reset: ResetConfig
-    location: LocationConfig
-    QC_dependent: list[QcDependentEntry]
-    QC: dict[str, QcEntry]
-    QC_global: dict[str, QcEntry] = field(default_factory=dict)
 
 
 def filter_cfg_to_query(filter_cfg: FilterEntry) -> str:

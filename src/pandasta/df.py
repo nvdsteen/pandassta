@@ -1,23 +1,21 @@
-from functools import partial
 import json
 import logging
 from copy import deepcopy
+from functools import partial
 from typing import List, Tuple
 
-from geopy import distance as geopy_distance
 import numpy as np
-from ordered_enum.ordered_enum import OrderedEnum
 import pandas as pd
 from geopandas import GeoDataFrame, points_from_xy
+from geopy import distance as geopy_distance
+from ordered_enum.ordered_enum import OrderedEnum
 from pandas import DataFrame, Series
 from pandas.api.types import CategoricalDtype
 from strenum import StrEnum
 from tqdm import tqdm
 
-from .sta import convert_to_datetime
-from .sta import Entities, Properties
-from .logging_constants import TQDM_DESC_FORMAT
-from .logging_constants import TQDM_BAR_FORMAT
+from .logging_constants import TQDM_BAR_FORMAT, TQDM_DESC_FORMAT
+from .sta import Entities, Properties, convert_to_datetime
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class Df(StrEnum):
     FEATURE_ID = "feature_id"
     DESCRIPTION = Properties.DESCRIPTION
     SENSOR = Entities.SENSOR
-    ZSCORE= "zscore"
+    ZSCORE = "zscore"
 
 
 # not used, keep for future reference
