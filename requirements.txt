@@ -9,3 +9,5 @@ pytest==8.1.1
 Requests==2.31.0
 StrEnum==0.4.15
 tqdm==4.66.2
+twine
+hatchling

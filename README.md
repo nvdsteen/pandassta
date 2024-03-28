@@ -1,12 +1,12 @@
-# pandasta: combining sensorthings and pandas 
+# pandassta: combining sensorthings and pandas 
 
-`pandasta` package allows easy tools to interact with a [FROST-Server](https://www.iosb.fraunhofer.de/en/projects-and-products/frost-server.html) Sensorthings API, using pandas dataframes.
+`pandassta` package allows easy tools to interact with a [FROST-Server](https://www.iosb.fraunhofer.de/en/projects-and-products/frost-server.html) Sensorthings API, using pandas dataframes.
 This package was developed within a quality assurance project, which is reflected in some specific functions.
 
 ## Installation
 
 ```shell
-pip install pandasta
+pip install pandassta
 ```
 
 ## Basic usage

@@ -10,17 +10,17 @@ from pandas.api import types
 from test_queries import (mock_response, mock_response_full,
                           mock_response_full_obs)
 
-from src.pandasta.df import (Df, QualityFlags, get_acceleration_series,
+from src.pandassta.df import (Df, QualityFlags, get_acceleration_series,
                     get_distance_geopy_series,
                     get_dt_velocity_and_acceleration_series,
                     get_velocity_series, response_obs_to_df,
                     response_single_datastream_to_df,
                     series_to_patch_dict)
-from src.pandasta.sta_requests import (Query, get_request,
+from src.pandassta.sta_requests import (Query, get_request,
                                   get_results_n_datastreams,
                                   response_datastreams_to_df)
-from src.pandasta.sta import Entities, Properties
-from src.pandasta.df import CAT_TYPE
+from src.pandassta.sta import Entities, Properties
+from src.pandassta.df import CAT_TYPE
 
 
 @pytest.fixture

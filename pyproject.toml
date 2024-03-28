@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pandasta"
+name = "pandassta"
 version = "0.0.1"
 authors = [
   { name="nvds" },
@@ -22,8 +22,8 @@ dynamic = ["dependencies"]
 files = ["requirements.txt"]
 
 [project.urls]
-Homepage = "https://github.com/nvdsteen/pandasta"
-Issues = "https://github.com/nvdsteen/pandasta/issues"
+Homepage = "https://github.com/nvdsteen/pandassta"
+Issues = "https://github.com/nvdsteen/pandassta/issues"
 
 [tool.pytest.ini_options]
 addopts = [
