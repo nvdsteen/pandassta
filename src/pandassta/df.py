@@ -106,6 +106,24 @@ class QualityFlags(OrderedEnum):
 CAT_TYPE = CategoricalDtype(list(QualityFlags), ordered=True)
 
 
+def process_feature_column(df: pd.DataFrame) -> pd.DataFrame:
+    try:
+        df_features = pd.json_normalize(df.pop(str(Entities.FEATUREOFINTEREST))).rename(  # type: ignore
+            columns={Df.IOT_ID: Df.FEATURE_ID}
+        )
+        df_coordinates = pd.DataFrame(
+            df_features.pop("feature.coordinates").values.tolist(),
+            columns=[Df.LONG, Df.LAT],
+        )
+        df_features = df_features.join(df_coordinates)
+        df = df.join(df_features)
+
+    except KeyError:
+        df[[Df.FEATURE_ID, Df.LONG, Df.LAT]] = [None, None, None]
+
+    return df
+
+
 def response_single_datastream_to_df(response_datastream: dict) -> pd.DataFrame:
     df = pd.DataFrame()
     observations_list = response_datastream.get(Entities.OBSERVATIONS, [])
@@ -139,20 +157,14 @@ def response_single_datastream_to_df(response_datastream: dict) -> pd.DataFrame:
             Entities.OBSERVEDPROPERTY, {}
         ).get(Properties.IOT_ID)
         df_i[Df.OBSERVATION_TYPE] = df_i[Df.OBSERVATION_TYPE].astype("category")
-        k1, k2 = Properties.UNITOFMEASUREMENT.split("/", 1)
+        k1, k2 = Properties.UNITOFMEASUREMENT.split(
+            "/", 1
+        )  # could be improved by using df.join(pd.DataFrame(df.pop('COLUMNNAME').values.tolist()))
         df_i[Df.UNITS] = response_datastream.get(k1, {}).get(k2)
         df_i[Df.UNITS] = df_i[Df.UNITS].astype("category")
 
-        df_i[[Df.LONG, Df.LAT]] = pd.DataFrame.from_records(
-            df_i[str(Entities.FEATUREOFINTEREST)].apply(
-                lambda x: x.get("feature").get("coordinates")
-            )
-        )
-        df_i[Df.FEATURE_ID] = df_i[str(Entities.FEATUREOFINTEREST)].apply(
-            lambda x: x.get(str(Properties.IOT_ID))
-        )
-        del df_i[str(Entities.FEATUREOFINTEREST)]
-        # df_i.drop(columns=str(Entities.FEATUREOFINTEREST))
+        df_i = process_feature_column(df_i)
+
         df = pd.concat([df, df_i], ignore_index=True)
 
     return df
