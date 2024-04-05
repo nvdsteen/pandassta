@@ -42,6 +42,81 @@ query = Query(base_url=config.load_sta_url(), root_entity=thing)
 query_http = query.build()
 ```
 
+
+### Step by step tutorial 
+
+Lets assume you want to obtain the air temperature and water temperature measured between 2023-03-10 00:00 and 2023-03-11 10:00. 
+
+- Get list of things
+	- Imports
+	  
+	  ```python
+	  from pandassta.sta_requests import Config, Entity, Entities, Query, Properties
+	  from pandassta.sta_requests import set_sta_url, get_request, response_datastreams_to_df
+	  ```
+	- Config
+	  
+	  ```python
+	  config = Config()
+	  set_sta_url("https://sensors.naturalsciences.be/sta/v1.1")
+	  
+	  thing = Entity(Entities.THINGS) #not structly needed in this step, but needed later
+	  ```
+	- Get json
+	  
+	  ```python
+	  # if `thing` is not defined 
+	  # query = Query(config.load_sta_url(), root_entity=Entities.THINGS)
+	  query = Query(config.load_sta_url(), root_entity=thing)
+	  q_url = query.build() # if needed
+	  response = get_request(query)
+	  ```
+- Get list of datastreams
+	- why not datastreams directly?
+	- using application https://sensors.naturalsciences.be/sensorthings-data/
+	- Using pandassta
+	  
+	  ```python
+	  thing.id = 1
+	  ds = Entity(Entities.DATASTREAMS)
+	  thing.selection = [ Entities.DATASTREAMS ]
+	  thing.expand = [ ds ]
+	  
+	  response = get_request(query)
+	  ```
+- Get the relevant data/observations.
+    In this example, datastreams 7749 and 7767 were selected, but multiple datastreams give the air or water temperature!
+	- define the filter
+	  
+	  ```python
+	  filter_ds = f"{Properties.IOT_ID} in (7749, 7767)"
+	  filter_obs = f"overlaps({Properties.PHENOMENONTIME}, 2023-03-10T00:00Z/2023-03-11T10:00Z)"
+	  ds.filter = filter_ds
+	  obs = Entity(Entities.OBSERVATIONS)
+	  
+	  obs.filter = filter_obs
+	  
+	  # # INCLUDING feature of interest! (coordinates)
+	  # foi = Entity(Entities.FEATUREOFINTEREST)
+	  # foi.selection = [Properties.COORDINATES, Properties.IOT_ID]
+	  # obs.expand = [foi]
+	  
+	  ds.expand = [obs]
+	  
+	  response = get_request(query)
+	  ```
+- Data to a pandas dataframe
+	- call pandassta method and verify dataframe
+	  
+	  ```python
+	  df = response_datastreams_to_df(response[1])
+	  df.head()
+	  ```
+		- output:
+		  
+		  ```txt
+		  df.head()
+
 ## Components
 ### General definitions: sta.py
 
