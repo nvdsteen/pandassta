@@ -108,9 +108,15 @@ CAT_TYPE = CategoricalDtype(list(QualityFlags), ordered=True)
 
 def process_feature_column(df: pd.DataFrame) -> pd.DataFrame:
     try:
-        df_features = pd.json_normalize(df.pop(str(Entities.FEATUREOFINTEREST))).rename(  # type: ignore
-            columns={Df.IOT_ID: Df.FEATURE_ID}
+        df_features = pd.json_normalize(df.pop(str(Entities.FEATUREOFINTEREST))) # type: ignore
+        try:
+            df_features = df_features.rename( 
+            columns={Df.IOT_ID: Df.FEATURE_ID},
+            errors="raise"
         )
+        except KeyError as e:
+            df_features[Df.FEATURE_ID] = None
+
         df_coordinates = pd.DataFrame(
             df_features.pop("feature.coordinates").values.tolist(),
             columns=[Df.LONG, Df.LAT],
@@ -118,7 +124,7 @@ def process_feature_column(df: pd.DataFrame) -> pd.DataFrame:
         df_features = df_features.join(df_coordinates)
         df = df.join(df_features)
 
-    except KeyError:
+    except KeyError as e:
         df[[Df.FEATURE_ID, Df.LONG, Df.LAT]] = [None, None, None]
 
     return df
