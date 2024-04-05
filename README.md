@@ -113,10 +113,16 @@ Lets assume you want to obtain the air temperature and water temperature measure
 	  df.head()
 	  ```
 		- output:
-		  
-		  ```txt
-		  df.head()
 
+            |   | @iot.selfLink                                                                                          | @iot.id    | phenomenonTime       | resultTime | result | resultQuality | observation_type | observed_property_id | units             | feature_id | long | lat |
+            |---|--------------------------------------------------------------------------------------------------------|------------|----------------------|------------|--------|---------------|------------------|----------------------|-------------------|------------|------|-----|
+            | 0 | [Link](https://sensors.naturalsciences.be/sta/v1.1/Ob...)                                              | 1155244072 | 2023-03-10 01:04:00 | None       | 9.8811 | 2             | NaN              | None                 | Degrees Celsius   | None       | None | None|
+            | 1 | [Link](https://sensors.naturalsciences.be/sta/v1.1/Ob...)                                              | 1155246938 | 2023-03-10 01:10:00 | None       | 9.8618 | 2             | NaN              | None                 | Degrees Celsius   | None       | None | None|
+            | 2 | [Link](https://sensors.naturalsciences.be/sta/v1.1/Ob...)                                              | 1155251749 | 2023-03-10 01:20:03 | None       | 9.7390 | 2             | NaN              | None                 | Degrees Celsius   | None       | None | None|
+            | 3 | [Link](https://sensors.naturalsciences.be/sta/v1.1/Ob...)                                              | 1155256547 | 2023-03-10 01:30:06 | None       | 9.7692 | 2             | NaN              | None                 | Degrees Celsius   | None       | None | None|
+            | 4 | [Link](https://sensors.naturalsciences.be/sta/v1.1/Ob...)                                              | 1155261355 | 2023-03-10 01:40:08 | None       | 9.7360 | 2             | NaN              | None                 | Degrees Celsius   | None       | None | None|
+
+		  
 ## Components
 ### General definitions: sta.py
 
