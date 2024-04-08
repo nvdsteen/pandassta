@@ -3,6 +3,7 @@ import logging
 from copy import deepcopy
 from functools import partial
 from typing import List, Tuple
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -412,6 +413,19 @@ def get_dt_velocity_and_acceleration_series(
 
     return (dt_out, velocity_out, acc_out)
 
+
+def csv_to_df(input_file: Path | str) -> pd.DataFrame:
+    df_out = pd.read_csv(input_file, index_col=0, parse_dates=[Df.TIME], date_format="mixed")
+
+    
+
+    for col in [Df.QC_FLAG, Df.OBSERVATION_TYPE, Df.UNITS]:
+        df_out[col] = df_out[col].astype("category")
+
+    df_out[Df.QC_FLAG] = df_out[Df.QC_FLAG].map(QualityFlags).astype(CAT_TYPE)
+    if df_out.isnull().any().any():
+        log.warning("The returned dataframe contains null values!")
+    return df_out
 
 # not in a test
 # not used, keep for reference

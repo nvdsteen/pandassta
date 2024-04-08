@@ -15,7 +15,7 @@ from src.pandassta.df import (Df, QualityFlags, get_acceleration_series,
                     get_dt_velocity_and_acceleration_series,
                     get_velocity_series, response_obs_to_df,
                     response_single_datastream_to_df,
-                    series_to_patch_dict)
+                    series_to_patch_dict, csv_to_df)
 from src.pandassta.sta_requests import (Query, get_request,
                                   get_results_n_datastreams,
                                   response_datastreams_to_df)
@@ -187,3 +187,26 @@ class TestDf:
             check_index=False,
             check_names=False,
         )
+
+    def test_csv_to_df(self):
+        df = csv_to_df(input_file="./tests/resources/small_dataset_export.csv")
+        expected_dtypes = {
+            Df.IOT_ID: "int64",
+            Df.DATASTREAM_ID: "int64",
+            Df.OBSERVED_PROPERTY_ID: "int64",
+            Df.FEATURE_ID: "int64",
+
+            Df.RESULT: "float64",
+            Df.LONG: "float64",
+            Df.LAT: "float64",
+
+            Df.TIME: "datetime64[ns]",
+
+            Df.OBSERVATION_TYPE: "category",
+            Df.QC_FLAG: "category",
+            Df.UNITS: "category",
+        }
+        assert df.dtypes.to_dict() == expected_dtypes
+        assert len(expected_dtypes) == df.shape[1]
+        assert not df.isnull().any().any()
+
