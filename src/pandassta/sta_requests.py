@@ -4,6 +4,7 @@ import configparser
 import json
 import logging
 import time
+import uuid
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -15,14 +16,12 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from .sta import FilterEntry
-
 from .df import (Df, df_type_conversions, response_single_datastream_to_df,
                  series_to_patch_dict)
 from .logging_constants import (ISO_STR_FORMAT, TQDM_BAR_FORMAT,
                                 TQDM_DESC_FORMAT)
-from .sta import (Entities, Filter, Order, OrderOption, Properties, Qactions,
-                  Settings, convert_to_datetime, log)
+from .sta import (Entities, Filter, FilterEntry, Order, OrderOption,
+                  Properties, Qactions, Settings, convert_to_datetime, log)
 
 log = logging.getLogger(__name__)
 
@@ -507,30 +506,56 @@ def patch_qc_flags(
 
     final_json = {"requests": df["patch_dict"].to_list()}
     log.info(f"Start batch patch query {url_entity}.")
-    response = requests.post(
-        headers={"Content-Type": "application/json"},
-        url=url,
-        data=json.dumps(final_json),
-        auth=auth,
-    )
-    try:
-        responses = response.json()["responses"]
-    except:
-        log.error(
-            "Something went wrong while posting. Is there a valid authentication?"
-        )
-        log.error(f"{response}")
-        raise IOError("{response}")
 
-    count_res = Counter([ri["status"] for ri in responses])
-    log.info("End batch patch query")
-    # log.info(f"{json.dumps(count_res)}")
-    if set(count_res.keys()) != set(
-        [
-            200,
-        ]
-    ):
-        log.error("Didn't succeed patching.")
+    try:
+        response = requests.post(
+            headers={"Content-Type": "application/json"},
+            url=url,
+            data=json.dumps(final_json),
+            auth=auth,
+        )
+        response.raise_for_status()
+
+    except requests.exceptions.HTTPError as e:
+        try:
+            file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
+        except:
+            log.warning("Couldn't detect log location.")
+        json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
+
+        with open(json_filename, "w", encoding="utf-8") as f:
+            json.dump(final_json, f, ensure_ascii=False, indent=4)
+        log.warning(f"json was written to file {json_filename}.")
+        # Handle HTTP errors
+        if response.status_code == 502:
+            log.error("Encountered a 502 Bad Gateway error.")
+        elif response.status_code == 401:
+            log.error("Incorrect authentication credentials.")
+        else:
+            log.error(f"An HTTP error occurred: {e}")
+
+    except requests.exceptions.RequestException as e:
+        # Handle other request-related exceptions
+        log.error(f"An error occurred while making the request: {e}")
+
+    except Exception as e:
+        # Handle any other unexpected exceptions
+        log.error(f"An unexpected error occurred: {e}")
+
+    if response.status_code == 200:
+        responses = response.json()["responses"]
+        count_res = Counter([ri["status"] for ri in responses])
+        log.info("End batch patch query")
+        # log.info(f"{json.dumps(count_res)}")
+        if set(count_res.keys()) != set(
+            [
+                200,
+            ]
+        ):
+            log.error("Didn't succeed patching.")
+    else:
+        count_res = Counter()
+
     return count_res
 
 
