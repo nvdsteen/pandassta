@@ -554,7 +554,7 @@ def patch_qc_flags(
         ):
             log.error("Didn't succeed patching.")
     else:
-        count_res = Counter()
+        count_res = Counter([])
 
     return count_res
 
