@@ -334,6 +334,7 @@ def get_total_observations_count(thing_id: int, filter_cfg: str) -> int:
     query_observations_count = get_observations_count_thing_query(
         entity_id=thing_id, filter_condition=filter_cfg, skip_n=skip_streams
     )
+    log.info("Retrieving total number of observations.")
     bool_nextlink = True
     while bool_nextlink:
         _, response_observations_count = get_results_n_datastreams(
@@ -378,6 +379,8 @@ def get_query_response(
     query: Query, total_count: int | None = None, follow_obs_nextlinks: bool = True
 ) -> dict:
     status_code, response = 0, {}
+
+    log.info("Retrieve all observations.")
 
     status_code, response_i = get_results_n_datastreams(query)
     response = update_response(response, response_i)
@@ -427,15 +430,17 @@ def get_query_response(
     return response
 
 
-def get_all_data(thing_id: int, filter_cfg: str):
+def get_all_data(thing_id: int, filter_cfg: str, count_observations: bool = False):
     log.info(f"Retrieving data of Thing {thing_id}.")
     log.info(f"---- filter: {filter_cfg}")
     log.debug("Get all data of thing {thing_id} with filter {filter_cfg}")
 
+    total_observations_count = None
     # get total count of observations to be retrieved
-    total_observations_count = get_total_observations_count(
-        thing_id=thing_id, filter_cfg=filter_cfg
-    )
+    if count_observations:
+        total_observations_count = get_total_observations_count(
+            thing_id=thing_id, filter_cfg=filter_cfg
+        )
 
     # get the actual data
     query = get_results_n_datastreams_query(
@@ -480,6 +485,26 @@ def get_datetime_latest_observation():
     return latest_phenomenonTime
 
 
+def json_generator(large_json):
+    # Start the JSON object with the "requests" key
+    yield '{"requests":['
+    
+    # Get the list of requests from the original large JSON object
+    requests_list = large_json['requests']
+    
+    # Loop through each request in the list
+    for i, req in enumerate(requests_list):
+        # Convert the individual request to JSON and yield it
+        yield json.dumps(req)
+        
+        # Add a comma after each request except the last one
+        if i < len(requests_list) - 1:
+            yield ','
+    
+    # Close the JSON array and object
+    yield ']}'
+
+
 def patch_qc_flags(
     df: pd.DataFrame,
     url: str,
@@ -511,7 +536,7 @@ def patch_qc_flags(
         response = requests.post(
             headers={"Content-Type": "application/json"},
             url=url,
-            data=json.dumps(final_json),
+            data=json_generator(final_json),
             auth=auth,
         )
         response.raise_for_status()
