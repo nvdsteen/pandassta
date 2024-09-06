@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from functools import partial, wraps
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Generator
 
 import pandas as pd
 import requests
@@ -485,7 +485,7 @@ def get_datetime_latest_observation():
     return latest_phenomenonTime
 
 
-def json_generator(large_json):
+def json_generator(large_json: dict[str, list[str]]) -> Generator:
     # Start the JSON object with the "requests" key
     yield '{"requests":['
     
