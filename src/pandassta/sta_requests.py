@@ -546,6 +546,11 @@ def patch_qc_flags(
     log.info(f"Start batch patch query {url_entity}.")
 
     def write_json_to_file(data: dict) -> None:
+        try:
+            file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
+        except:
+            log.warning("Couldn't detect log location.")
+
         json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
 
         with open(json_filename, "w", encoding="utf-8") as f:
@@ -562,11 +567,6 @@ def patch_qc_flags(
         response.raise_for_status()
 
     except requests.exceptions.HTTPError as e:
-        try:
-            file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
-        except:
-            log.warning("Couldn't detect log location.")
-
         write_json_to_file(data=final_json)
 
         # Handle HTTP errors
