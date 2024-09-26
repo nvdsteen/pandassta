@@ -16,12 +16,25 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from .df import (Df, df_type_conversions, response_single_datastream_to_df,
-                 series_to_patch_dict)
-from .logging_constants import (ISO_STR_FORMAT, TQDM_BAR_FORMAT,
-                                TQDM_DESC_FORMAT)
-from .sta import (Entities, Filter, FilterEntry, Order, OrderOption,
-                  Properties, Qactions, Settings, convert_to_datetime, log)
+from .df import (
+    Df,
+    df_type_conversions,
+    response_single_datastream_to_df,
+    series_to_patch_dict,
+)
+from .logging_constants import ISO_STR_FORMAT, TQDM_BAR_FORMAT, TQDM_DESC_FORMAT
+from .sta import (
+    Entities,
+    Filter,
+    FilterEntry,
+    Order,
+    OrderOption,
+    Properties,
+    Qactions,
+    Settings,
+    convert_to_datetime,
+    log,
+)
 
 log = logging.getLogger(__name__)
 
@@ -488,21 +501,21 @@ def get_datetime_latest_observation():
 def json_generator(large_json: dict[str, list[str]]) -> Generator:
     # Start the JSON object with the "requests" key
     yield '{"requests":['
-    
+
     # Get the list of requests from the original large JSON object
-    requests_list = large_json['requests']
-    
+    requests_list = large_json["requests"]
+
     # Loop through each request in the list
     for i, req in enumerate(requests_list):
         # Convert the individual request to JSON and yield it
         yield json.dumps(req)
-        
+
         # Add a comma after each request except the last one
         if i < len(requests_list) - 1:
-            yield ','
-    
+            yield ","
+
     # Close the JSON array and object
-    yield ']}'
+    yield "]}"
 
 
 def patch_qc_flags(
@@ -532,6 +545,13 @@ def patch_qc_flags(
     final_json = {"requests": df["patch_dict"].to_list()}
     log.info(f"Start batch patch query {url_entity}.")
 
+    def write_json_to_file(data: dict) -> None:
+        json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
+
+        with open(json_filename, "w", encoding="utf-8") as f:
+            json.dump(final_json, f, ensure_ascii=False, indent=4)
+        log.warning(f"json was written to file {json_filename}.")
+
     try:
         response = requests.post(
             headers={"Content-Type": "application/json"},
@@ -546,11 +566,9 @@ def patch_qc_flags(
             file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
         except:
             log.warning("Couldn't detect log location.")
-        json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
 
-        with open(json_filename, "w", encoding="utf-8") as f:
-            json.dump(final_json, f, ensure_ascii=False, indent=4)
-        log.warning(f"json was written to file {json_filename}.")
+        write_json_to_file(data=final_json)
+
         # Handle HTTP errors
         if response.status_code == 502:
             log.error("Encountered a 502 Bad Gateway error.")
@@ -562,10 +580,12 @@ def patch_qc_flags(
     except requests.exceptions.RequestException as e:
         # Handle other request-related exceptions
         log.error(f"An error occurred while making the request: {e}")
+        write_json_to_file(data=final_json)
 
     except Exception as e:
         # Handle any other unexpected exceptions
         log.error(f"An unexpected error occurred: {e}")
+        write_json_to_file(data=final_json)
 
     if response.status_code == 200:
         responses = response.json()["responses"]
