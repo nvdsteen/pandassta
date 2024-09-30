@@ -443,7 +443,7 @@ def get_query_response(
     return response
 
 
-def get_all_data(thing_id: int, filter_cfg: str, count_observations: bool = False):
+def get_all_data(thing_id: int, filter_cfg: str, count_observations: bool = False, expand_feature_of_interest: bool = True, top_observations: int = 500000):
     log.info(f"Retrieving data of Thing {thing_id}.")
     log.info(f"---- filter: {filter_cfg}")
     log.debug("Get all data of thing {thing_id} with filter {filter_cfg}")
@@ -457,7 +457,7 @@ def get_all_data(thing_id: int, filter_cfg: str, count_observations: bool = Fals
 
     # get the actual data
     query = get_results_n_datastreams_query(
-        entity_id=thing_id, filter_condition=filter_cfg
+        entity_id=thing_id, filter_condition=filter_cfg, expand_feature_of_interest=expand_feature_of_interest, top_observations=top_observations
     )
 
     # TODO: refactor:
