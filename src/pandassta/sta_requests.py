@@ -10,31 +10,18 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from functools import partial, wraps
 from pathlib import Path
-from typing import List, Optional, Tuple, Generator
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import requests
 from tqdm import tqdm
 
-from .df import (
-    Df,
-    df_type_conversions,
-    response_single_datastream_to_df,
-    series_to_patch_dict,
-)
-from .logging_constants import ISO_STR_FORMAT, TQDM_BAR_FORMAT, TQDM_DESC_FORMAT
-from .sta import (
-    Entities,
-    Filter,
-    FilterEntry,
-    Order,
-    OrderOption,
-    Properties,
-    Qactions,
-    Settings,
-    convert_to_datetime,
-    log,
-)
+from .df import (Df, df_type_conversions, response_single_datastream_to_df,
+                 series_to_patch_dict)
+from .logging_constants import (ISO_STR_FORMAT, TQDM_BAR_FORMAT,
+                                TQDM_DESC_FORMAT)
+from .sta import (Entities, Filter, FilterEntry, Order, OrderOption,
+                  Properties, Qactions, Settings, convert_to_datetime, log)
 
 log = logging.getLogger(__name__)
 
@@ -239,6 +226,7 @@ def get_request(query: Query | str) -> Tuple[int, dict]:
 def get_observations_count_thing_query(
     entity_id: int,
     filter_condition: str = "",
+    filter_condition_datastreams: str = "",
     skip_n: int = 0,
 ) -> Query:
     observations = Entity(Entities.OBSERVATIONS)
@@ -246,6 +234,7 @@ def get_observations_count_thing_query(
     observations.filter = filter_condition
     datastreams = Entity(Entities.DATASTREAMS)
     datastreams.settings = [Settings.SKIP(skip_n)]
+    datastreams.filter = filter_condition_datastreams
     datastreams.selection = [Properties.OBSERVATIONS_COUNT]
     datastreams.expand = [observations]
 
@@ -264,11 +253,12 @@ def get_results_n_datastreams_query(
     n: int | None = None,
     skip: int | None = None,
     top_observations: int | None = None,
-    filter_condition: str = "",
+    filter_condition_observations: str = "",
+    filter_condition_datastreams: str= "",
     expand_feature_of_interest: bool = True,
 ) -> Query:
     obs = Entity(Entities.OBSERVATIONS)
-    obs.filter = filter_condition
+    obs.filter = filter_condition_observations
     obs.settings = [Settings.TOP(top_observations)]
     obs.selection = [
         Properties.IOT_ID,
@@ -285,6 +275,7 @@ def get_results_n_datastreams_query(
     obsprop.selection = [Properties.IOT_ID, Properties.NAME]
 
     ds = Entity(Entities.DATASTREAMS)
+    ds.filter = filter_condition_datastreams
     ds.settings = [Settings.TOP(n), Settings.SKIP(skip)]
     ds.selection = [
         Properties.IOT_ID,
@@ -341,11 +332,11 @@ def response_datastreams_to_df(response: dict) -> pd.DataFrame:
     return df_out
 
 
-def get_total_observations_count(thing_id: int, filter_cfg: str) -> int:
+def get_total_observations_count(thing_id: int, filter_cfg: str, filter_cfg_datastreams: str) -> int:
     total_observations_count = 0
     skip_streams = 0
     query_observations_count = get_observations_count_thing_query(
-        entity_id=thing_id, filter_condition=filter_cfg, skip_n=skip_streams
+        entity_id=thing_id, filter_condition=filter_cfg, filter_condition_datastreams=filter_cfg_datastreams, skip_n=skip_streams
     )
     log.info("Retrieving total number of observations.")
     bool_nextlink = True
@@ -361,7 +352,7 @@ def get_total_observations_count(thing_id: int, filter_cfg: str) -> int:
         )
         skip_streams += len(response_observations_count["Datastreams"])
         query_observations_count = get_observations_count_thing_query(
-            entity_id=thing_id, filter_condition=filter_cfg, skip_n=skip_streams
+            entity_id=thing_id, filter_condition=filter_cfg, filter_condition_datastreams=filter_cfg_datastreams, skip_n=skip_streams
         )
         bool_nextlink = response_observations_count.get(
             "Datastreams@iot.nextLink", False
@@ -443,7 +434,7 @@ def get_query_response(
     return response
 
 
-def get_all_data(thing_id: int, filter_cfg: str, count_observations: bool = False, expand_feature_of_interest: bool = True, top_observations: int = 500000):
+def get_all_data(thing_id: int, filter_cfg: str, filter_cfg_datastreams: str = "", count_observations: bool = False):
     log.info(f"Retrieving data of Thing {thing_id}.")
     log.info(f"---- filter: {filter_cfg}")
     log.debug("Get all data of thing {thing_id} with filter {filter_cfg}")
@@ -452,12 +443,12 @@ def get_all_data(thing_id: int, filter_cfg: str, count_observations: bool = Fals
     # get total count of observations to be retrieved
     if count_observations:
         total_observations_count = get_total_observations_count(
-            thing_id=thing_id, filter_cfg=filter_cfg
+            thing_id=thing_id, filter_cfg=filter_cfg, filter_cfg_datastreams=filter_cfg_datastreams
         )
 
     # get the actual data
     query = get_results_n_datastreams_query(
-        entity_id=thing_id, filter_condition=filter_cfg, expand_feature_of_interest=expand_feature_of_interest, top_observations=top_observations
+        entity_id=thing_id, filter_condition_observations=filter_cfg, filter_condition_datastreams=filter_cfg_datastreams
     )
 
     # TODO: refactor:
@@ -498,24 +489,24 @@ def get_datetime_latest_observation():
     return latest_phenomenonTime
 
 
-def json_generator(large_json: dict[str, list[str]]) -> Generator:
+def json_generator(large_json):
     # Start the JSON object with the "requests" key
     yield '{"requests":['
-
+    
     # Get the list of requests from the original large JSON object
-    requests_list = large_json["requests"]
-
+    requests_list = large_json['requests']
+    
     # Loop through each request in the list
     for i, req in enumerate(requests_list):
         # Convert the individual request to JSON and yield it
         yield json.dumps(req)
-
+        
         # Add a comma after each request except the last one
         if i < len(requests_list) - 1:
-            yield ","
-
+            yield ','
+    
     # Close the JSON array and object
-    yield "]}"
+    yield ']}'
 
 
 def patch_qc_flags(
@@ -545,18 +536,6 @@ def patch_qc_flags(
     final_json = {"requests": df["patch_dict"].to_list()}
     log.info(f"Start batch patch query {url_entity}.")
 
-    def write_json_to_file(data: dict) -> None:
-        try:
-            file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
-        except:
-            log.warning("Couldn't detect log location.")
-
-        json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
-
-        with open(json_filename, "w", encoding="utf-8") as f:
-            json.dump(final_json, f, ensure_ascii=False, indent=4)
-        log.warning(f"json was written to file {json_filename}.")
-
     try:
         response = requests.post(
             headers={"Content-Type": "application/json"},
@@ -567,8 +546,15 @@ def patch_qc_flags(
         response.raise_for_status()
 
     except requests.exceptions.HTTPError as e:
-        write_json_to_file(data=final_json)
+        try:
+            file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
+        except:
+            log.warning("Couldn't detect log location.")
+        json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
 
+        with open(json_filename, "w", encoding="utf-8") as f:
+            json.dump(final_json, f, ensure_ascii=False, indent=4)
+        log.warning(f"json was written to file {json_filename}.")
         # Handle HTTP errors
         if response.status_code == 502:
             log.error("Encountered a 502 Bad Gateway error.")
@@ -580,12 +566,10 @@ def patch_qc_flags(
     except requests.exceptions.RequestException as e:
         # Handle other request-related exceptions
         log.error(f"An error occurred while making the request: {e}")
-        write_json_to_file(data=final_json)
 
     except Exception as e:
         # Handle any other unexpected exceptions
         log.error(f"An unexpected error occurred: {e}")
-        write_json_to_file(data=final_json)
 
     if response.status_code == 200:
         responses = response.json()["responses"]

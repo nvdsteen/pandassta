@@ -183,5 +183,11 @@ class PhenomenonTimeFilter:
 
 
 @dataclass
+class DatastreamsFilter:
+    ids: List[int]
+
+
+@dataclass
 class FilterEntry:
     phenomenonTime: PhenomenonTimeFilter
+    Datastreams: DatastreamsFilter
