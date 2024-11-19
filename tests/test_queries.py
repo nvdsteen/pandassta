@@ -1,22 +1,28 @@
 import json
 
 import pytest
+
 # from numpy.testing import
 import src.pandassta.sta_requests
 from omegaconf import DictConfig
 from hydra import compose, initialize
 
-from src.pandassta.sta_requests import (Entity, Query, build_query_datastreams,
-                                        get_absolute_path_to_base,
-                                        get_nb_datastreams_of_thing,
-                                        get_observations_count_thing_query,
-                                        get_request, get_results_n_datastreams,
-                                        get_results_n_datastreams_query,
-                                        response_datastreams_to_df,
-                                        update_response)
-from src.pandassta.sta import (Entities, Filter, Properties, Qactions,
-                                   Settings)
+from src.pandassta.sta_requests import (
+    Entity,
+    Query,
+    build_query_datastreams,
+    get_absolute_path_to_base,
+    get_nb_datastreams_of_thing,
+    get_observations_count_thing_query,
+    get_request,
+    get_results_n_datastreams,
+    get_results_n_datastreams_query,
+    response_datastreams_to_df,
+    update_response,
+)
+from src.pandassta.sta import Entities, Filter, Properties, Qactions, Settings
 from src.pandassta.sta_requests import filter_cfg_to_query, set_sta_url
+
 
 @pytest.fixture(scope="session")
 def cfg() -> DictConfig:
@@ -25,6 +31,7 @@ def cfg() -> DictConfig:
     set_sta_url(conf.data_api.base_url)
 
     return conf
+
 
 class MockResponse:
     def __init__(self):
@@ -161,7 +168,7 @@ class TestServicesRequests:
         filter_condition = filter_cfg_to_query(cfg.data_api.get("filter", {}))
         out = get_results_n_datastreams_query(
             entity_id=entity_id,
-            filter_condition=filter_condition,
+            filter_condition_observations=filter_condition,
             expand_feature_of_interest=False,
         )
 
@@ -176,13 +183,17 @@ class TestServicesRequests:
             ")"
         )
 
+    # TODO: implement test
+    def test_get_results_n_datastreams_specified_query(self, cfg):
+        assert(False)
+
     def test_get_results_n_datastreams_query_none(self, cfg):
         cfg_api = cfg.get("data_api", {})
         entity_id = cfg_api.get("things", {}).get("id")
         filter_condition = filter_cfg_to_query(cfg.data_api.get("filter", {}))
         out = get_results_n_datastreams_query(
             entity_id=entity_id,
-            filter_condition=filter_condition,
+            filter_condition_observations=filter_condition,
             expand_feature_of_interest=False,
         )
 
