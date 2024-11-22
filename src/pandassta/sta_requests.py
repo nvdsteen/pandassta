@@ -509,14 +509,11 @@ def json_generator(large_json):
     yield ']}'
 
 
-def patch_qc_flags(
-    df: pd.DataFrame,
-    url: str,
-    auth: Tuple[str, str] | None = None,
+def create_patch_json(df: pd.DataFrame,
     columns: List[Df] = [Df.IOT_ID, Df.QC_FLAG],
     url_entity: Entities = Entities.OBSERVATIONS,
     json_body_template: str | None = None,
-) -> Counter:
+) -> str:
     if df.empty:
         log.warning("No ouliers are flagged (empty DataFrame).")
         return Counter([])
@@ -534,6 +531,26 @@ def patch_qc_flags(
         return Counter([])
 
     final_json = {"requests": df["patch_dict"].to_list()}
+    return final_json
+
+
+def write_patch_to_file(final_json: str, file_path: Path, log_level:str ="INFO") -> None:
+    json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
+
+    with open(json_filename, "w", encoding="utf-8") as f:
+        json.dump(final_json, f, ensure_ascii=False, indent=4)
+    log.log(getattr(logging, log_level), f"json was written to file {json_filename}.")
+
+
+def patch_qc_flags(
+    df: pd.DataFrame,
+    url: str,
+    auth: Tuple[str, str] | None = None,
+    columns: List[Df] = [Df.IOT_ID, Df.QC_FLAG],
+    url_entity: Entities = Entities.OBSERVATIONS,
+    json_body_template: str | None = None,
+) -> Counter:
+    final_json = create_patch_json(df=df, columns=columns, url_entity=url_entity, json_body_template=json_body_template)
     log.info(f"Start batch patch query {url_entity}.")
 
     try:
@@ -550,11 +567,8 @@ def patch_qc_flags(
             file_path = Path(log.root.handlers[1].baseFilename).parent  # type: ignore
         except:
             log.warning("Couldn't detect log location.")
-        json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
 
-        with open(json_filename, "w", encoding="utf-8") as f:
-            json.dump(final_json, f, ensure_ascii=False, indent=4)
-        log.warning(f"json was written to file {json_filename}.")
+        write_patch_to_file(final_json=final_json, file_path=file_path, log_level="WARNING")
         # Handle HTTP errors
         if response.status_code == 502:
             log.error("Encountered a 502 Bad Gateway error.")
