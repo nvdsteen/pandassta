@@ -16,12 +16,25 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from .df import (Df, df_type_conversions, response_single_datastream_to_df,
-                 series_to_patch_dict)
-from .logging_constants import (ISO_STR_FORMAT, TQDM_BAR_FORMAT,
-                                TQDM_DESC_FORMAT)
-from .sta import (Entities, Filter, FilterEntry, Order, OrderOption,
-                  Properties, Qactions, Settings, convert_to_datetime, log)
+from .df import (
+    Df,
+    df_type_conversions,
+    response_single_datastream_to_df,
+    series_to_patch_dict,
+)
+from .logging_constants import ISO_STR_FORMAT, TQDM_BAR_FORMAT, TQDM_DESC_FORMAT
+from .sta import (
+    Entities,
+    Filter,
+    FilterEntry,
+    Order,
+    OrderOption,
+    Properties,
+    Qactions,
+    Settings,
+    convert_to_datetime,
+    log,
+)
 
 log = logging.getLogger(__name__)
 
@@ -254,7 +267,7 @@ def get_results_n_datastreams_query(
     skip: int | None = None,
     top_observations: int | None = None,
     filter_condition_observations: str = "",
-    filter_condition_datastreams: str= "",
+    filter_condition_datastreams: str = "",
     expand_feature_of_interest: bool = True,
 ) -> Query:
     obs = Entity(Entities.OBSERVATIONS)
@@ -332,11 +345,16 @@ def response_datastreams_to_df(response: dict) -> pd.DataFrame:
     return df_out
 
 
-def get_total_observations_count(thing_id: int, filter_cfg: str, filter_cfg_datastreams: str) -> int:
+def get_total_observations_count(
+    thing_id: int, filter_cfg: str, filter_cfg_datastreams: str
+) -> int:
     total_observations_count = 0
     skip_streams = 0
     query_observations_count = get_observations_count_thing_query(
-        entity_id=thing_id, filter_condition=filter_cfg, filter_condition_datastreams=filter_cfg_datastreams, skip_n=skip_streams
+        entity_id=thing_id,
+        filter_condition=filter_cfg,
+        filter_condition_datastreams=filter_cfg_datastreams,
+        skip_n=skip_streams,
     )
     log.info("Retrieving total number of observations.")
     bool_nextlink = True
@@ -352,7 +370,10 @@ def get_total_observations_count(thing_id: int, filter_cfg: str, filter_cfg_data
         )
         skip_streams += len(response_observations_count["Datastreams"])
         query_observations_count = get_observations_count_thing_query(
-            entity_id=thing_id, filter_condition=filter_cfg, filter_condition_datastreams=filter_cfg_datastreams, skip_n=skip_streams
+            entity_id=thing_id,
+            filter_condition=filter_cfg,
+            filter_condition_datastreams=filter_cfg_datastreams,
+            skip_n=skip_streams,
         )
         bool_nextlink = response_observations_count.get(
             "Datastreams@iot.nextLink", False
@@ -434,7 +455,12 @@ def get_query_response(
     return response
 
 
-def get_all_data(thing_id: int, filter_cfg: str, filter_cfg_datastreams: str = "", count_observations: bool = False):
+def get_all_data(
+    thing_id: int,
+    filter_cfg: str,
+    filter_cfg_datastreams: str = "",
+    count_observations: bool = False,
+):
     log.info(f"Retrieving data of Thing {thing_id}.")
     log.info(f"---- filter: {filter_cfg}")
     log.debug("Get all data of thing {thing_id} with filter {filter_cfg}")
@@ -443,12 +469,16 @@ def get_all_data(thing_id: int, filter_cfg: str, filter_cfg_datastreams: str = "
     # get total count of observations to be retrieved
     if count_observations:
         total_observations_count = get_total_observations_count(
-            thing_id=thing_id, filter_cfg=filter_cfg, filter_cfg_datastreams=filter_cfg_datastreams
+            thing_id=thing_id,
+            filter_cfg=filter_cfg,
+            filter_cfg_datastreams=filter_cfg_datastreams,
         )
 
     # get the actual data
     query = get_results_n_datastreams_query(
-        entity_id=thing_id, filter_condition_observations=filter_cfg, filter_condition_datastreams=filter_cfg_datastreams
+        entity_id=thing_id,
+        filter_condition_observations=filter_cfg,
+        filter_condition_datastreams=filter_cfg_datastreams,
     )
 
     # TODO: refactor:
@@ -492,24 +522,25 @@ def get_datetime_latest_observation():
 def json_generator(large_json):
     # Start the JSON object with the "requests" key
     yield '{"requests":['
-    
+
     # Get the list of requests from the original large JSON object
-    requests_list = large_json['requests']
-    
+    requests_list = large_json["requests"]
+
     # Loop through each request in the list
     for i, req in enumerate(requests_list):
         # Convert the individual request to JSON and yield it
         yield json.dumps(req)
-        
+
         # Add a comma after each request except the last one
         if i < len(requests_list) - 1:
-            yield ','
-    
+            yield ","
+
     # Close the JSON array and object
-    yield ']}'
+    yield "]}"
 
 
-def create_patch_json(df: pd.DataFrame,
+def create_patch_json(
+    df: pd.DataFrame,
     columns: List[Df] = [Df.IOT_ID, Df.QC_FLAG],
     url_entity: Entities = Entities.OBSERVATIONS,
     json_body_template: str | None = None,
@@ -534,7 +565,9 @@ def create_patch_json(df: pd.DataFrame,
     return final_json
 
 
-def write_patch_to_file(final_json: str, file_path: Path, log_level:str ="INFO") -> None:
+def write_patch_to_file(
+    final_json: str, file_path: Path, log_level: str = "INFO"
+) -> None:
     json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
 
     with open(json_filename, "w", encoding="utf-8") as f:
@@ -542,6 +575,20 @@ def write_patch_to_file(final_json: str, file_path: Path, log_level:str ="INFO")
     log.log(getattr(logging, log_level), f"json was written to file {json_filename}.")
 
 
+def dry_run_skip(func):
+    """Decorator to skip a function in dry-run mode."""
+
+    def wrapper(*args, **kwargs):
+        DRY_RUN = config.load_dryrun_var()
+        if DRY_RUN:
+            log.warning(f"[DRY-RUN] Skipping: {func.__name__}")
+            return None  # Or some placeholder result if needed
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@dry_run_skip
 def patch_qc_flags(
     df: pd.DataFrame,
     url: str,
@@ -550,7 +597,12 @@ def patch_qc_flags(
     url_entity: Entities = Entities.OBSERVATIONS,
     json_body_template: str | None = None,
 ) -> Counter:
-    final_json = create_patch_json(df=df, columns=columns, url_entity=url_entity, json_body_template=json_body_template)
+    final_json = create_patch_json(
+        df=df,
+        columns=columns,
+        url_entity=url_entity,
+        json_body_template=json_body_template,
+    )
     log.info(f"Start batch patch query {url_entity}.")
 
     try:
@@ -568,7 +620,9 @@ def patch_qc_flags(
         except:
             log.warning("Couldn't detect log location.")
 
-        write_patch_to_file(final_json=final_json, file_path=file_path, log_level="WARNING")
+        write_patch_to_file(
+            final_json=final_json, file_path=file_path, log_level="WARNING"
+        )
         # Handle HTTP errors
         if response.status_code == 502:
             log.error("Encountered a 502 Bad Gateway error.")
@@ -656,6 +710,11 @@ def set_sta_url(sta_url):
     config.save()
 
 
+def set_dryrun_var(dry_run: bool = False):
+    config.set(DRY_RUN=["", True][dry_run])
+    config.save()
+
+
 FILENAME = ".staconf.ini"
 
 
@@ -703,6 +762,11 @@ class Config:
             )
             return ""
         return sta_url
+
+    def load_dryrun_var(self):
+        DRY_RUN = bool(self.get("DRY_RUN"))
+        log.warning(f"{DRY_RUN=}")
+        return DRY_RUN
 
     def load_authentication(self):
         sta_usr = self.get("STA_USR")
