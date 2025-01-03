@@ -596,7 +596,7 @@ def patch_qc_flags(
     columns: List[Df] = [Df.IOT_ID, Df.QC_FLAG],
     url_entity: Entities = Entities.OBSERVATIONS,
     json_body_template: str | None = None,
-    write_patch_to_file: bool = False,
+    bool_write_patch_to_file: bool = False,
 ) -> Counter:
     final_json = create_patch_json(
         df=df,
@@ -621,7 +621,7 @@ def patch_qc_flags(
         except:
             log.warning("Couldn't detect log location.")
 
-        if not write_patch_to_file:
+        if not bool_write_patch_to_file:
             write_patch_to_file(
                 final_json=final_json, file_path=file_path, log_level="WARNING"
             )
