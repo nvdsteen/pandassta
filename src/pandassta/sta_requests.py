@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import uuid
+import queue
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -405,7 +406,7 @@ def get_query_response(
 ) -> dict:
     status_code, response = 0, {}
 
-    log.info("Retrieve all observations.")
+    log.info("Execute query.")
 
     status_code, response_i = get_results_n_datastreams(query)
     response = update_response(response, response_i)
@@ -428,6 +429,7 @@ def get_query_response(
             desc=TQDM_DESC_FORMAT.format("Observations count"),
             bar_format=TQDM_BAR_FORMAT,
         )
+        pbar.monitor.name = "Observations count"
     count_observations = 0
     for ds_i in response.get(Entities.DATASTREAMS, {}):  # type: ignore
         query = ds_i.get(Entities.OBSERVATIONS + "@iot.nextLink", None)
@@ -448,9 +450,10 @@ def get_query_response(
             ds_i[Entities.OBSERVATIONS + "@iot.nextLink"] = query
         count_observations += len(ds_i[Entities.OBSERVATIONS])
         if total_count:
-            pbar.update(len(ds_i[Entities.OBSERVATIONS]))
+             pbar.update(len(ds_i[Entities.OBSERVATIONS]))
     if total_count:
         pbar.close()
+
 
     return response
 
@@ -460,10 +463,13 @@ def get_all_data(
     filter_cfg: str,
     filter_cfg_datastreams: str = "",
     count_observations: bool = False,
+    message_str: str = None,
+    result_queue: queue.Queue = None,
 ):
-    log.info(f"Retrieving data of Thing {thing_id}.")
+    message_str = message_str or f"Retrieving data of Thing {thing_id}."
+    log.info(message_str)
     log.info(f"---- filter: {filter_cfg}")
-    log.debug("Get all data of thing {thing_id} with filter {filter_cfg}")
+    log.debug(message_str + f"with filter {filter_cfg}")
 
     total_observations_count = None
     # get total count of observations to be retrieved
@@ -499,6 +505,8 @@ def get_all_data(
     )
     log.debug(f"Columns of constructed df: {df_out.columns}.")
     log.debug(f"Datastreams observation types: {df_out[Df.OBSERVATION_TYPE].unique()}")
+    if queue:
+        result_queue.put(df_out)
     return df_out
 
 
