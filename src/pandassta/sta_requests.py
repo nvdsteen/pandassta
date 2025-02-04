@@ -450,10 +450,9 @@ def get_query_response(
             ds_i[Entities.OBSERVATIONS + "@iot.nextLink"] = query
         count_observations += len(ds_i[Entities.OBSERVATIONS])
         if total_count:
-             pbar.update(len(ds_i[Entities.OBSERVATIONS]))
+            pbar.update(len(ds_i[Entities.OBSERVATIONS]))
     if total_count:
         pbar.close()
-
 
     return response
 
@@ -499,13 +498,15 @@ def get_all_data(
         log.warning(f"The dataframe has NAN values.")
     if df_out.empty:
         log.warning(f"No data retrieved.")
+        if result_queue:
+            result_queue.put(df_out)
         return df_out
     log.info(
         f"Quality flag counts as downloaded: {df_out[Df.QC_FLAG].value_counts(dropna=False).to_json()}"
     )
     log.debug(f"Columns of constructed df: {df_out.columns}.")
     log.debug(f"Datastreams observation types: {df_out[Df.OBSERVATION_TYPE].unique()}")
-    if queue:
+    if result_queue:
         result_queue.put(df_out)
     return df_out
 
