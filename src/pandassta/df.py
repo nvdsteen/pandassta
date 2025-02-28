@@ -36,6 +36,7 @@ class Df(StrEnum):
     LAT = "lat"
     OBSERVED_PROPERTY_ID = "observed_property_id"
     FEATURE_ID = "feature_id"
+    FEATURE_QC_FLAG= Properties.FEATURE_FLAG.replace("/", ".")
     DESCRIPTION = Properties.DESCRIPTION
     SENSOR = Entities.SENSOR
     ZSCORE = "zscore"

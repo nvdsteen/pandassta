@@ -32,6 +32,7 @@ class Properties(StrEnum):
     OBSERVATIONS_COUNT = (
         "Observations/@iot.count"  # can this be dynamic? base_entity/count?
     )
+    FEATURE_FLAG = "properties/resultQuality"
 
     def __str__(self):
         return f"{self.value}"

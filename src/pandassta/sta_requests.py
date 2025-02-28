@@ -281,7 +281,7 @@ def get_results_n_datastreams_query(
         Properties.QC_FLAG,
     ]
     foi = Entity(Entities.FEATUREOFINTEREST)
-    foi.selection = [Properties.COORDINATES, Properties.IOT_ID]
+    foi.selection = [Properties.COORDINATES, Properties.IOT_ID, Properties.FEATURE_FLAG]
     if expand_feature_of_interest:
         obs.expand = [foi]
 
