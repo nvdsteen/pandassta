@@ -353,7 +353,7 @@ def get_velocity_series(
     distance = get_distance_geopy_series(df_sorted)  # type: ignore
     velocity = distance / dt
 
-    velocity = velocity.bfill().replace(np.inf, np.NAN)
+    velocity = velocity.bfill().replace(np.inf, np.nan)
     if return_dt:
         return (dt.rename("dt"), velocity.rename("velocity"))
     return velocity
@@ -369,7 +369,7 @@ def get_acceleration_series(
 
     accdt = velocity.shift(-1) - velocity
     acc = accdt / dt
-    acc = acc.bfill().replace(np.inf, np.NAN)
+    acc = acc.bfill().replace(np.inf, np.nan)
     if return_dt:
         return (dt.rename("dt"), acc.rename("acceleration))"))
     return acc.rename("acceleration))")
@@ -396,10 +396,10 @@ def get_dt_velocity_and_acceleration_series(
     accdt = velocity.shift(-1) - velocity
     acc = accdt / dt
 
-    velocity = velocity.bfill().replace(np.inf, np.NAN)
-    velocity = velocity.bfill().replace(-np.inf, np.NAN)
-    acc = acc.bfill().replace(np.inf, np.NAN)
-    acc = acc.bfill().replace(-np.inf, np.NAN)
+    velocity = velocity.bfill().replace(np.inf, np.nan)
+    velocity = velocity.bfill().replace(-np.inf, np.nan)
+    acc = acc.bfill().replace(np.inf, np.nan)
+    acc = acc.bfill().replace(-np.inf, np.nan)
     velocity_out = Series(index=df.index)
     velocity_out.loc[velocity.index] = velocity
     velocity_out = velocity_out.rename("velocity")
