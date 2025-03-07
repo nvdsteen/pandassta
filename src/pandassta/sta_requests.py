@@ -712,19 +712,24 @@ def get_elev_netcdf() -> None:
 
 
 def get_ne_10m_shp(local_folder: Path | str) -> None:
-    url = "https://github.com/nvkelso/natural-earth-vector/blob/master/10m_physical/ne_10m_land.shp"
+    urls = ["https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.shp",
+            "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.shx",
+            "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.prj",
+            "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.dbf",
+            "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.cpg"]
     assert ~bool(local_folder.suffix), "The provided path is not a folder."
     Path(local_folder).mkdir(parents=True, exist_ok=True)
-    filename = url.rsplit("/", 1)[1]
-    local_file = Path(local_folder).joinpath(filename)
+    for url in urls:
+        filename = url.rsplit("/", 1)[1]
+        local_file = Path(local_folder).joinpath(filename)
 
-    if not local_file.exists():
-        log.info("Downloading natural earth land polynomials.")
-        log.info(f"  file: {local_file}")
-        r = requests.get(url, stream=True)
-        with open(local_file, "wb") as f:
-            f.write(download_as_bytes_with_progress(url))
-        log.info("Download completed.")
+        if not local_file.exists():
+            log.info("Downloading natural earth land polynomials.")
+            log.info(f"  file: {local_file}")
+            r = requests.get(url, stream=True)
+            with open(local_file, "wb") as f:
+                f.write(download_as_bytes_with_progress(url))
+            log.info("Download completed.")
 
 
 def set_sta_url(sta_url):
