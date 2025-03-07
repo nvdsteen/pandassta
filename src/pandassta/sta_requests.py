@@ -711,6 +711,22 @@ def get_elev_netcdf() -> None:
         log.info("Download completed.")
 
 
+def get_ne_10m_shp(local_folder: Path | str) -> None:
+    url = "https://github.com/nvkelso/natural-earth-vector/blob/master/10m_physical/ne_10m_land.shp"
+    assert ~bool(local_folder.suffix), "The provided path is not a folder."
+    Path(local_folder).mkdir(parents=True, exist_ok=True)
+    filename = url.rsplit("/", 1)[1]
+    local_file = Path(local_folder).joinpath(filename)
+
+    if not local_file.exists():
+        log.info("Downloading natural earth land polynomials.")
+        log.info(f"  file: {local_file}")
+        r = requests.get(url, stream=True)
+        with open(local_file, "wb") as f:
+            f.write(download_as_bytes_with_progress(url))
+        log.info("Download completed.")
+
+
 def set_sta_url(sta_url):
     if not isinstance(sta_url, str):
         logging.critical("The provided url (" + str(sta_url) + ") is not valid")
