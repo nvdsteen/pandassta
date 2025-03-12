@@ -429,7 +429,8 @@ def get_query_response(
             desc=TQDM_DESC_FORMAT.format("Observations count"),
             bar_format=TQDM_BAR_FORMAT,
         )
-        pbar.monitor.name = "Observations count"
+        if pbar.monitor is not None:
+            pbar.monitor.name = "Observations count"
     count_observations = 0
     for ds_i in response.get(Entities.DATASTREAMS, {}):  # type: ignore
         query = ds_i.get(Entities.OBSERVATIONS + "@iot.nextLink", None)
@@ -462,8 +463,8 @@ def get_all_data(
     filter_cfg: str,
     filter_cfg_datastreams: str = "",
     count_observations: bool = False,
-    message_str: str = None,
-    result_queue: queue.Queue = None,
+    message_str: str | None = None,
+    result_queue: queue.Queue | None = None,
 ):
     message_str = message_str or f"Retrieving data of Thing {thing_id}."
     log.info(message_str)
@@ -553,7 +554,7 @@ def create_patch_json(
     columns: List[Df] = [Df.IOT_ID, Df.QC_FLAG],
     url_entity: Entities = Entities.OBSERVATIONS,
     json_body_template: str | None = None,
-) -> str:
+) -> str | dict | Counter:
     if df.empty:
         log.warning("No ouliers are flagged (empty DataFrame).")
         return Counter([])
@@ -575,7 +576,7 @@ def create_patch_json(
 
 
 def write_patch_to_file(
-    final_json: str, file_path: Path, log_level: str = "INFO"
+    final_json: str | dict, file_path: Path, log_level: str = "INFO"
 ) -> None:
     json_filename = file_path.joinpath(uuid.uuid4().hex + ".json")
 
@@ -619,7 +620,7 @@ def patch_qc_flags(
         response = requests.post(
             headers={"Content-Type": "application/json"},
             url=url,
-            data=json_generator(final_json),
+            data=json_generator(final_json), # type: ignore
             auth=auth,
         )
         response.raise_for_status()
@@ -695,7 +696,7 @@ def get_absolute_path_to_base():
     return out
 
 
-def get_elev_netcdf(local_folder: Path | str = None) -> Path:
+def get_elev_netcdf(local_folder: Path | str | None = None) -> Path:
     url_ETOPO = "https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/60s/60s_bed_elev_netcdf/ETOPO_2022_v1_60s_N90W180_bed.nc"
     filename_ETOPO = url_ETOPO.rsplit("/", 1)[1]
     if local_folder is None:
@@ -720,7 +721,7 @@ def get_ne_10m_shp(local_folder: Path | str) -> None:
             "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.prj",
             "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.dbf",
             "https://github.com/nvkelso/natural-earth-vector/raw/refs/heads/master/10m_physical/ne_10m_land.cpg"]
-    assert ~bool(local_folder.suffix), "The provided path is not a folder."
+    assert not bool(Path(local_folder).suffix), "The provided path is not a folder."
     Path(local_folder).mkdir(parents=True, exist_ok=True)
     for url in urls:
         filename = url.rsplit("/", 1)[1]
