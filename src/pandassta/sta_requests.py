@@ -695,11 +695,13 @@ def get_absolute_path_to_base():
     return out
 
 
-def get_elev_netcdf() -> None:
+def get_elev_netcdf(local_folder: Path | str = None) -> Path:
     url_ETOPO = "https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/60s/60s_bed_elev_netcdf/ETOPO_2022_v1_60s_N90W180_bed.nc"
     filename_ETOPO = url_ETOPO.rsplit("/", 1)[1]
+    if local_folder is None:
+        local_folder = get_absolute_path_to_base().joinpath("resources")
     local_file = (
-        get_absolute_path_to_base().joinpath("resources").joinpath(filename_ETOPO)
+        Path(local_folder).joinpath(filename_ETOPO)
     )
 
     if not local_file.exists():
@@ -709,6 +711,7 @@ def get_elev_netcdf() -> None:
         with open(local_file, "wb") as f:
             f.write(download_as_bytes_with_progress(url_ETOPO))
         log.info("Download completed.")
+    return local_file
 
 
 def get_ne_10m_shp(local_folder: Path | str) -> None:
