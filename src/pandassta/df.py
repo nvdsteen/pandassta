@@ -243,8 +243,8 @@ def df_type_conversions(df):
         if mu1 > mu0:
             log.warning("df type conversion might not reduce the memory usage!")
 
-    if Df.QC_FLAG in df.columns:
-        df_out[Df.QC_FLAG] = df_out[Df.QC_FLAG].astype(CAT_TYPE)
+    for ci in set(df.columns).intersection([Df.QC_FLAG, Df.FEATURE_QC_FLAG]):
+        df_out[ci] = df_out[ci].astype(CAT_TYPE)
     for ci in set(list_columns).intersection(["bool"]):
         df_out[ci] = df_out[ci].astype("bool")
 
